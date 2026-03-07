@@ -16,6 +16,7 @@ Route::middleware('auth')->group(function () {
 
     // Chat
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/select-provider', [ChatController::class, 'selectProvider'])->name('chat.select-provider');
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
     Route::get('/chat/{chatSession}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{chatSession}/messages', [ChatController::class, 'sendMessage'])->name('chat.message');

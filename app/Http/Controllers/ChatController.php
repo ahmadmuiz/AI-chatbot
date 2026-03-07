@@ -17,7 +17,7 @@ class ChatController extends Controller
     ) {}
 
     /**
-     * Show the chat page (redirect to latest session or create new one).
+     * Show the chat page (redirect to latest session or provider selection).
      */
     public function index(): RedirectResponse
     {
@@ -27,7 +27,8 @@ class ChatController extends Controller
             ->first();
 
         if (! $session) {
-            $session = $this->createSession('New Chat');
+            // No sessions exist, show provider selection
+            return redirect()->route('chat.select-provider');
         }
 
         return redirect()->route('chat.show', $session);
@@ -48,11 +49,25 @@ class ChatController extends Controller
     }
 
     /**
-     * Create a new chat session and redirect to it.
+     * Show AI provider selection screen.
+     */
+    public function selectProvider(): View
+    {
+        return view('chat.select-provider');
+    }
+
+    /**
+     * Create a new chat session with selected AI provider and redirect to it.
      */
     public function store(): RedirectResponse
     {
-        $session = $this->createSession('New Chat');
+        $provider = request()->input('ai_provider', 'claude');
+
+        if (!in_array($provider, ['claude', 'gemini'])) {
+            $provider = 'claude';
+        }
+
+        $session = $this->createSession('New Chat', $provider);
 
         return redirect()->route('chat.show', $session);
     }
@@ -99,8 +114,8 @@ class ChatController extends Controller
             })
             ->toArray();
 
-        // Call AI service (Claude or Gemini based on configuration)
-        $aiService = AIServiceFactory::make();
+        // Call AI service based on session's selected provider
+        $aiService = $this->getAIServiceForSession($chatSession);
         $assistantText = $aiService->chat($history);
 
         // Persist assistant message
@@ -117,8 +132,28 @@ class ChatController extends Controller
 
     // -------------------------------------------------------------------------
 
-    private function createSession(string $title): ChatSession
+    /**
+     * Get AI service instance based on session's provider selection.
+     */
+    private function getAIServiceForSession(ChatSession $chatSession)
     {
-        return auth()->user()->chatSessions()->create(['title' => $title]);
+        $provider = $chatSession->ai_provider ?? 'claude';
+
+        return match ($provider) {
+            'claude' => app(\App\Services\ClaudeService::class),
+            'gemini' => app(\App\Services\GeminiService::class),
+            default => app(\App\Services\ClaudeService::class),
+        };
+    }
+
+    /**
+     * Create a new chat session with specified AI provider.
+     */
+    private function createSession(string $title, string $aiProvider = 'claude'): ChatSession
+    {
+        return auth()->user()->chatSessions()->create([
+            'title' => $title,
+            'ai_provider' => $aiProvider,
+        ]);
     }
 }

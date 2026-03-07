@@ -729,7 +729,14 @@
             <div class="chat-header-icon">✦</div>
             <div>
                 <div class="chat-title" id="chat-session-title">{{ $chatSession->title }}</div>
-                <div class="chat-subtitle">claude-opus-4-5 &middot; AI Assistant</div>
+                <div class="chat-subtitle">
+                    @if($chatSession->ai_provider === 'gemini')
+                        <span title="Using Google Gemini">🌟 Gemini</span>
+                    @else
+                        <span title="Using Claude via AWS Bedrock">🧠 Claude</span>
+                    @endif
+                    &middot; AI Assistant
+                </div>
             </div>
         </div>
 
