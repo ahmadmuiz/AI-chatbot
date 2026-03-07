@@ -14,6 +14,9 @@
     <!-- Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css">
+
     <style>
         :root {
             --bg-primary: #0a0a0f;
@@ -426,25 +429,152 @@
         .msg-bubble p { margin-bottom: 8px; }
         .msg-bubble p:last-child { margin-bottom: 0; }
 
-        .msg-bubble pre {
-            background: rgba(0,0,0,0.4);
+        /* ── Markdown & Code Rendering ── */
+        .msg-bubble {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .msg-bubble p {
+            margin-bottom: 12px;
+            line-height: 1.65;
+        }
+
+        .msg-bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .msg-bubble h1, .msg-bubble h2, .msg-bubble h3, .msg-bubble h4, .msg-bubble h5, .msg-bubble h6 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+
+        .msg-bubble h1 { font-size: 22px; }
+        .msg-bubble h2 { font-size: 20px; }
+        .msg-bubble h3 { font-size: 18px; }
+        .msg-bubble h4 { font-size: 16px; }
+        .msg-bubble h5 { font-size: 14px; }
+        .msg-bubble h6 { font-size: 13px; }
+
+        .msg-bubble ul, .msg-bubble ol {
+            margin: 12px 0;
+            margin-left: 24px;
+            line-height: 1.8;
+        }
+
+        .msg-bubble li {
+            margin-bottom: 6px;
+        }
+
+        .msg-bubble blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: 12px;
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .msg-bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+
+        .msg-bubble table th,
+        .msg-bubble table td {
             border: 1px solid var(--glass-border);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .msg-bubble table th {
+            background: rgba(124,58,237,0.15);
+            font-weight: 600;
+            color: var(--accent-light);
+        }
+
+        .msg-bubble table tr:nth-child(even) {
+            background: rgba(124,58,237,0.05);
+        }
+
+        .msg-bubble strong, .msg-bubble b {
+            font-weight: 600;
+            color: var(--accent-light);
+        }
+
+        .msg-bubble em, .msg-bubble i {
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .msg-bubble a {
+            color: var(--accent-light);
+            text-decoration: underline;
+            transition: all 0.2s;
+        }
+
+        .msg-bubble a:hover {
+            color: #ddd6fe;
+            text-decoration-thickness: 2px;
+        }
+
+        .msg-bubble hr {
+            border: none;
+            border-top: 1px solid var(--glass-border);
+            margin: 16px 0;
+        }
+
+        /* Code blocks */
+        .msg-bubble pre {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(124,58,237,0.2);
             border-radius: 8px;
-            padding: 12px;
+            padding: 14px;
             overflow-x: auto;
-            margin: 8px 0;
+            margin: 12px 0;
             font-size: 12px;
-            line-height: 1.5;
+            line-height: 1.6;
+            position: relative;
         }
 
-        .msg-bubble code {
-            background: rgba(124,58,237,0.2);
+        .msg-bubble pre code {
+            background: none;
+            padding: 0;
+            color: var(--text-primary);
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+        }
+
+        /* Inline code */
+        .msg-bubble code:not(pre code) {
+            background: rgba(124,58,237,0.25);
+            border: 1px solid rgba(124,58,237,0.3);
             border-radius: 4px;
-            padding: 1px 5px;
-            font-size: 12px;
+            padding: 2px 6px;
+            font-size: 13px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            color: var(--accent-light);
         }
 
-        .msg-bubble pre code { background: none; padding: 0; }
+        /* Syntax highlighting */
+        .hljs {
+            background: none;
+            color: inherit;
+        }
+
+        .hljs-string { color: #a6e22e; }
+        .hljs-number { color: #ae81ff; }
+        .hljs-literal { color: #ae81ff; }
+        .hljs-attr { color: #a6e22e; }
+        .hljs-title { color: #75b5ff; }
+        .hljs-function { color: #75b5ff; }
+        .hljs-params { color: var(--text-primary); }
+        .hljs-built_in { color: #66d9ef; }
+        .hljs-keyword { color: #f92672; }
+        .hljs-comment { color: #75715e; }
+        .hljs-variable { color: #a6e22e; }
 
         .msg-time {
             font-size: 10px;
@@ -767,7 +897,13 @@
                             @endif
                         </div>
                         <div>
-                            <div class="msg-bubble">{!! nl2br(e($msg->content)) !!}</div>
+                            <div class="msg-bubble">
+                                @if($msg->role === 'user')
+                                    {!! nl2br(e($msg->content)) !!}
+                                @else
+                                    {!! \App\Services\MarkdownRenderer::render($msg->content) !!}
+                                @endif
+                            </div>
                             @if($msg->attachments->isNotEmpty())
                                 <div class="msg-attachments">
                                     @foreach($msg->attachments as $attachment)
@@ -939,7 +1075,66 @@
         return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     }
 
-    function addMessage(role, content, time) {
+    function renderMarkdown(markdown) {
+        // Load marked from CDN
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+
+        return new Promise((resolve) => {
+            script.onload = () => {
+                // Configure marked options
+                marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    headerIds: true,
+                });
+
+                // Render markdown to HTML
+                let html = marked.parse(markdown);
+
+                // Sanitize: remove script tags and dangerous attributes
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                // Remove script tags
+                temp.querySelectorAll('script').forEach(el => el.remove());
+
+                // Add syntax highlighting
+                temp.querySelectorAll('pre code').forEach(block => {
+                    const language = block.className.replace('language-', '');
+                    if (language) {
+                        highlightCode(block);
+                    }
+                });
+
+                resolve(temp.innerHTML);
+            };
+
+            // Only add script if not already loaded
+            if (!window.marked) {
+                document.head.appendChild(script);
+            } else {
+                script.onload();
+            }
+        });
+    }
+
+    function highlightCode(codeBlock) {
+        const hlScript = document.createElement('script');
+        hlScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js';
+
+        hlScript.onload = () => {
+            window.hljs.highlightElement(codeBlock);
+        };
+
+        if (!window.hljs) {
+            document.head.appendChild(hlScript);
+        } else {
+            window.hljs.highlightElement(codeBlock);
+        }
+    }
+
+    async function addMessage(role, content, time) {
         // Remove welcome state if present
         if (welcomeState) welcomeState.remove();
 
@@ -948,17 +1143,33 @@
         const msgEl    = document.createElement('div');
         msgEl.className = `message ${role}`;
 
-        // Escape HTML for display
-        const escaped = content
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>');
+        let bubbleContent;
+
+        if (isUser) {
+            // For user messages, escape HTML and simple formatting
+            bubbleContent = content
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>');
+        } else {
+            // For AI messages, render as markdown
+            try {
+                bubbleContent = await renderMarkdown(content);
+            } catch (e) {
+                // Fallback to escaped text if rendering fails
+                bubbleContent = content
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>');
+            }
+        }
 
         msgEl.innerHTML = `
             <div class="msg-avatar">${name}</div>
             <div>
-                <div class="msg-bubble">${escaped}</div>
+                <div class="msg-bubble">${bubbleContent}</div>
                 <div class="msg-time">${time}</div>
             </div>
         `;
