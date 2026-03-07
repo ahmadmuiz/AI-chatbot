@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChatMessage extends Model
 {
@@ -12,5 +13,10 @@ class ChatMessage extends Model
     public function session(): BelongsTo
     {
         return $this->belongsTo(ChatSession::class, 'chat_session_id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(ChatAttachment::class);
     }
 }

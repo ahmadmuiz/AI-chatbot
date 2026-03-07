@@ -497,6 +497,50 @@
             border-top: 1px solid var(--glass-border);
         }
 
+        .attachments-preview {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .attachment-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(124,58,237,0.15);
+            border: 1px solid rgba(124,58,237,0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--accent-light);
+        }
+
+        .attachment-item .remove-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .attachment-item .remove-btn:hover { opacity: 1; }
+
+        .attachment-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
         .input-wrapper {
             display: flex;
             gap: 10px;
@@ -529,7 +573,7 @@
 
         #message-input::placeholder { color: var(--text-muted); }
 
-        .send-btn {
+        .file-btn, .send-btn {
             width: 38px;
             height: 38px;
             border-radius: 10px;
@@ -545,8 +589,52 @@
             box-shadow: 0 0 15px var(--accent-glow);
         }
 
-        .send-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--accent-glow); }
-        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .file-btn:hover, .send-btn:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--accent-glow); }
+        .file-btn:disabled, .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        #file-input {
+            display: none;
+        }
+
+        /* File attachment display in messages */
+        .msg-attachments {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .attachment-preview {
+            max-width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .attachment-preview img {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .attachment-doc {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .attachment-doc:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+        }
 
         .input-footer {
             text-align: center;
@@ -673,6 +761,26 @@
                         </div>
                         <div>
                             <div class="msg-bubble">{!! nl2br(e($msg->content)) !!}</div>
+                            @if($msg->attachments->isNotEmpty())
+                                <div class="msg-attachments">
+                                    @foreach($msg->attachments as $attachment)
+                                        @if(str_starts_with($attachment->mime_type, 'image/'))
+                                            <div class="attachment-preview">
+                                                <img
+                                                    src="data:{{ $attachment->mime_type }};base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('local')->get($attachment->storage_path)) }}"
+                                                    alt="{{ $attachment->original_filename }}"
+                                                    title="{{ $attachment->original_filename }}"
+                                                >
+                                            </div>
+                                        @else
+                                            <a href="#" class="attachment-doc" title="{{ $attachment->original_filename }}">
+                                                <span class="attachment-icon">📄</span>
+                                                <span>{{ \Illuminate\Support\Str::limit($attachment->original_filename, 20) }}</span>
+                                            </a>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
                             <div class="msg-time">{{ $msg->created_at->format('g:i A') }}</div>
                         </div>
                     </div>
@@ -682,6 +790,7 @@
         </div>
 
         <div class="input-area">
+            <div class="attachments-preview" id="attachments-preview"></div>
             <div class="input-wrapper">
                 <textarea
                     id="message-input"
@@ -689,12 +798,18 @@
                     rows="1"
                     autofocus
                 ></textarea>
+                <button class="file-btn" id="file-btn" onclick="triggerFileInput()" title="Attach files">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    </svg>
+                </button>
                 <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send message">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                     </svg>
                 </button>
             </div>
+            <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.csv,.xlsx,.json,.pptx,.odt">
             <div class="input-footer">Claude can make mistakes. Consider checking important information.</div>
         </div>
     </div>
@@ -707,7 +822,12 @@
     const messagesArea = document.getElementById('messages-area');
     const input        = document.getElementById('message-input');
     const sendBtn      = document.getElementById('send-btn');
+    const fileBtn      = document.getElementById('file-btn');
+    const fileInput    = document.getElementById('file-input');
     const welcomeState = document.getElementById('welcome-state');
+    const previewArea  = document.getElementById('attachments-preview');
+
+    let selectedFiles = [];
 
     // Auto-resize textarea
     input.addEventListener('input', () => {
@@ -722,6 +842,81 @@
             sendMessage();
         }
     });
+
+    // File input handler
+    fileInput.addEventListener('change', (e) => {
+        selectedFiles = Array.from(e.target.files);
+        updatePreview();
+    });
+
+    // Drag and drop support
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        messagesArea.style.background = 'rgba(124,58,237,0.1)';
+    });
+
+    document.addEventListener('dragleave', (e) => {
+        if (e.target === document) {
+            messagesArea.style.background = 'transparent';
+        }
+    });
+
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        messagesArea.style.background = 'transparent';
+
+        const files = Array.from(e.dataTransfer.files);
+        selectedFiles = [...selectedFiles, ...files].slice(0, 5);
+        updatePreview();
+    });
+
+    function triggerFileInput() {
+        fileInput.click();
+    }
+
+    function updatePreview() {
+        previewArea.innerHTML = '';
+
+        if (selectedFiles.length === 0) return;
+
+        selectedFiles.forEach((file, idx) => {
+            const item = document.createElement('div');
+            item.className = 'attachment-item';
+
+            const icon = getFileIcon(file.type);
+            const size = formatFileSize(file.size);
+
+            item.innerHTML = `
+                <span class="attachment-icon">${icon}</span>
+                <span>${file.name.substring(0, 25)}</span>
+                <span style="font-size: 10px; opacity: 0.7;">(${size})</span>
+                <button type="button" class="remove-btn" onclick="removeFile(${idx})" title="Remove file">✕</button>
+            `;
+
+            previewArea.appendChild(item);
+        });
+    }
+
+    function removeFile(idx) {
+        selectedFiles.splice(idx, 1);
+        fileInput.value = '';
+        updatePreview();
+    }
+
+    function getFileIcon(mimeType) {
+        if (mimeType.startsWith('image/')) return '🖼️';
+        if (mimeType === 'application/pdf') return '📕';
+        if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+        if (mimeType.includes('sheet') || mimeType.includes('csv') || mimeType.includes('excel')) return '📊';
+        if (mimeType.includes('presentation')) return '📊';
+        return '📄';
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
 
     function fillInput(text) {
         input.value = text;
@@ -792,15 +987,30 @@
 
     async function sendMessage() {
         const text = input.value.trim();
-        if (!text) return;
+        if (!text && selectedFiles.length === 0) return;
+
+        // Prepare FormData for multipart request (needed for files)
+        const formData = new FormData();
+        formData.append('message', text);
+
+        // Add selected files
+        selectedFiles.forEach(file => {
+            formData.append('attachments[]', file);
+        });
 
         // Clear input and disable
         input.value = '';
         input.style.height = 'auto';
         sendBtn.disabled = true;
+        fileBtn.disabled = true;
 
         const sentTime = formatTime();
-        addMessage('user', text, sentTime);
+        addMessage('user', text || '(Sent file)', sentTime);
+
+        // Clear preview and files
+        selectedFiles = [];
+        previewArea.innerHTML = '';
+        fileInput.value = '';
 
         const typing = addTypingIndicator();
 
@@ -808,11 +1018,10 @@
             const res = await fetch(`/chat/${SESSION_ID}/messages`, {
                 method : 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN' : CSRF_TOKEN,
                     'Accept'       : 'application/json',
                 },
-                body: JSON.stringify({ message: text }),
+                body: formData,
             });
 
             typing.remove();
@@ -821,6 +1030,7 @@
                 const err = await res.json().catch(() => ({}));
                 showError(err.message || 'Something went wrong. Please try again.');
                 sendBtn.disabled = false;
+                fileBtn.disabled = false;
                 return;
             }
 
@@ -842,6 +1052,7 @@
         }
 
         sendBtn.disabled = false;
+        fileBtn.disabled = false;
         input.focus();
     }
 

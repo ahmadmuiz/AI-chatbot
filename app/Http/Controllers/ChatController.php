@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ChatMessageRequest;
 use App\Models\ChatSession;
 use App\Services\ClaudeService;
+use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class ChatController extends Controller
 {
-    public function __construct(protected ClaudeService $claude) {}
+    public function __construct(
+        protected ClaudeService $claude,
+        protected FileUploadService $fileUploadService,
+    ) {}
 
     /**
      * Show the chat page (redirect to latest session or create new one).
@@ -57,17 +61,24 @@ class ChatController extends Controller
     /**
      * Send a message and return the AI response as JSON.
      */
-    public function sendMessage(Request $request, ChatSession $chatSession): JsonResponse
+    public function sendMessage(ChatMessageRequest $request, ChatSession $chatSession): JsonResponse
     {
         abort_unless($chatSession->user_id === auth()->id(), 403);
 
-        $request->validate(['message' => 'required|string|max:10000']);
-
         // Persist user message
-        $chatSession->messages()->create([
+        $userMessage = $chatSession->messages()->create([
             'role'    => 'user',
             'content' => $request->message,
         ]);
+
+        // Handle file attachments if present
+        $attachments = null;
+        if ($request->hasFile('attachments')) {
+            $attachments = $this->fileUploadService->storeFiles(
+                $request->file('attachments'),
+                $userMessage
+            );
+        }
 
         // Auto-title the session from the first message
         if ($chatSession->title === 'New Chat' && $chatSession->messages()->count() === 1) {
@@ -75,11 +86,18 @@ class ChatController extends Controller
             $chatSession->update(['title' => $title]);
         }
 
-        // Build message history for Claude
+        // Build message history for Claude (with attachments)
         $history = $chatSession->messages()
+            ->with('attachments')
             ->orderBy('created_at')
             ->get()
-            ->map(fn ($m) => ['role' => $m->role, 'content' => $m->content])
+            ->map(function ($m) {
+                $msg = ['role' => $m->role, 'content' => $m->content];
+                if ($m->attachments->isNotEmpty()) {
+                    $msg['attachments'] = $m->attachments;
+                }
+                return $msg;
+            })
             ->toArray();
 
         // Call Claude
