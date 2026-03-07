@@ -130,6 +130,24 @@ class ChatController extends Controller
         ]);
     }
 
+    /**
+     * Update the AI provider for an existing chat session.
+     */
+    public function updateProvider(ChatSession $chatSession): JsonResponse
+    {
+        abort_unless($chatSession->user_id === auth()->id(), 403);
+
+        $provider = request()->input('ai_provider');
+
+        if (!in_array($provider, ['claude', 'gemini'])) {
+            return response()->json(['error' => 'Invalid provider.'], 422);
+        }
+
+        $chatSession->update(['ai_provider' => $provider]);
+
+        return response()->json(['ai_provider' => $provider]);
+    }
+
     // -------------------------------------------------------------------------
 
     /**

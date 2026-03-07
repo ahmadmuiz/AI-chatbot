@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
     Route::get('/chat/{chatSession}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{chatSession}/messages', [ChatController::class, 'sendMessage'])->name('chat.message');
+    Route::patch('/chat/{chatSession}/provider', [ChatController::class, 'updateProvider'])->name('chat.update-provider');
 });
 
 require __DIR__.'/auth.php';

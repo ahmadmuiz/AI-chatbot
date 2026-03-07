@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,7 +18,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/atom-one-dark.min.css">
 
     <style>
-        :root {
+        :root,
+        html[data-theme="dark"] {
             --bg-primary: #0a0a0f;
             --bg-secondary: #111118;
             --bg-sidebar: #0d0d14;
@@ -33,6 +34,73 @@
             --user-bubble: linear-gradient(135deg, #7c3aed, #5b21b6);
             --ai-bubble: rgba(255,255,255,0.05);
             --scrollbar-thumb: rgba(124,58,237,0.4);
+            --modal-bg: #111118;
+            --code-bg: rgba(0,0,0,0.6);
+            --header-area-bg: rgba(10,10,15,0.85);
+            --body-gradient: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(124,58,237,0.12) 0%, transparent 70%);
+        }
+
+        html[data-theme="light"] {
+            --bg-primary: #f5f3ff;
+            --bg-secondary: #ede9ff;
+            --bg-sidebar: #e8e2ff;
+            --glass: rgba(0,0,0,0.04);
+            --glass-border: rgba(0,0,0,0.1);
+            --accent: #7c3aed;
+            --accent-glow: rgba(124,58,237,0.15);
+            --accent-light: #6d28d9;
+            --text-primary: #1a1228;
+            --text-secondary: #4b4070;
+            --text-muted: #8b7fb0;
+            --user-bubble: linear-gradient(135deg, #7c3aed, #5b21b6);
+            --ai-bubble: rgba(0,0,0,0.05);
+            --scrollbar-thumb: rgba(124,58,237,0.25);
+            --modal-bg: #ffffff;
+            --code-bg: #1e1b2e;
+            --header-area-bg: rgba(240,236,255,0.92);
+            --body-gradient: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(124,58,237,0.08) 0%, transparent 70%);
+        }
+
+        html[data-theme="midnight"] {
+            --bg-primary: #000000;
+            --bg-secondary: #060608;
+            --bg-sidebar: #030305;
+            --glass: rgba(255,255,255,0.03);
+            --glass-border: rgba(255,255,255,0.06);
+            --accent: #8b5cf6;
+            --accent-glow: rgba(139,92,246,0.45);
+            --accent-light: #c4b5fd;
+            --text-primary: #f0ebff;
+            --text-secondary: #7c71a5;
+            --text-muted: #3d3558;
+            --user-bubble: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            --ai-bubble: rgba(255,255,255,0.03);
+            --scrollbar-thumb: rgba(139,92,246,0.35);
+            --modal-bg: #0a0a12;
+            --code-bg: rgba(0,0,0,0.85);
+            --header-area-bg: rgba(0,0,0,0.9);
+            --body-gradient: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(139,92,246,0.15) 0%, transparent 70%);
+        }
+
+        html[data-theme="ocean"] {
+            --bg-primary: #070e1c;
+            --bg-secondary: #0b1428;
+            --bg-sidebar: #060c18;
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(56,189,248,0.12);
+            --accent: #0ea5e9;
+            --accent-glow: rgba(14,165,233,0.35);
+            --accent-light: #38bdf8;
+            --text-primary: #e0f2ff;
+            --text-secondary: #6ea8c8;
+            --text-muted: #2e5a72;
+            --user-bubble: linear-gradient(135deg, #0ea5e9, #0369a1);
+            --ai-bubble: rgba(255,255,255,0.04);
+            --scrollbar-thumb: rgba(14,165,233,0.35);
+            --modal-bg: #0b1428;
+            --code-bg: rgba(0,0,0,0.6);
+            --header-area-bg: rgba(7,14,28,0.88);
+            --body-gradient: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(14,165,233,0.12) 0%, transparent 70%);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,8 +111,7 @@
             color: var(--text-primary);
             height: 100vh;
             overflow: hidden;
-            background-image:
-                radial-gradient(ellipse 80% 60% at 50% -20%, rgba(124,58,237,0.12) 0%, transparent 70%);
+            background-image: var(--body-gradient);
         }
 
         /* ── Layout ── */
@@ -254,7 +321,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            background: rgba(10,10,15,0.6);
+            background: var(--header-area-bg);
             backdrop-filter: blur(20px);
         }
 
@@ -529,7 +596,7 @@
 
         /* Code blocks */
         .msg-bubble pre {
-            background: rgba(0,0,0,0.6);
+            background: var(--code-bg);
             border: 1px solid rgba(124,58,237,0.2);
             border-radius: 8px;
             padding: 14px;
@@ -622,7 +689,7 @@
         /* Input area */
         .input-area {
             padding: 16px 28px 24px;
-            background: rgba(10,10,15,0.6);
+            background: var(--header-area-bg);
             backdrop-filter: blur(20px);
             border-top: 1px solid var(--glass-border);
         }
@@ -696,9 +763,11 @@
             font-size: 14px;
             font-family: 'Inter', sans-serif;
             resize: none;
-            max-height: 200px;
-            line-height: 1.5;
+            min-height: 72px;
+            max-height: 240px;
+            line-height: 1.6;
             padding: 4px 6px;
+            align-self: stretch;
         }
 
         #message-input::placeholder { color: var(--text-muted); }
@@ -766,12 +835,197 @@
             color: var(--text-primary);
         }
 
+        .model-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .model-switcher-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .model-pills {
+            display: flex;
+            gap: 6px;
+        }
+
+        .model-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--glass-border);
+            background: var(--glass);
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .model-pill:hover {
+            border-color: rgba(124,58,237,0.4);
+            color: var(--text-secondary);
+        }
+
+        .model-pill.active-claude {
+            background: rgba(124,58,237,0.2);
+            border-color: rgba(124,58,237,0.5);
+            color: #a78bfa;
+        }
+
+        .model-pill.active-gemini {
+            background: rgba(16,185,129,0.15);
+            border-color: rgba(16,185,129,0.4);
+            color: #6ee7b7;
+        }
+
+        .model-pill.switching {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
         .input-footer {
             text-align: center;
             font-size: 11px;
             color: var(--text-muted);
-            margin-top: 10px;
+            margin-top: 8px;
         }
+
+        /* ── Provider Modal ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            background: var(--modal-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(124,58,237,0.1);
+            transform: translateY(12px);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.open .modal-card {
+            transform: translateY(0);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .modal-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .provider-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .provider-option {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .provider-option:hover {
+            background: rgba(124,58,237,0.1);
+            border-color: rgba(124,58,237,0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(124,58,237,0.15);
+        }
+
+        .provider-option-icon {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .provider-option-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .provider-option-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.15s;
+        }
+
+        .modal-close:hover { background: rgba(248,113,113,0.1); color: #f87171; border-color: #f87171; }
+
+        .session-provider-badge {
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: auto;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-claude { background: rgba(124,58,237,0.2); color: #a78bfa; border: 1px solid rgba(124,58,237,0.25); }
+        .badge-gemini { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
 
         /* Error toast */
         .error-toast {
@@ -789,6 +1043,80 @@
             z-index: 99;
         }
 
+        /* ── Light theme specific overrides ── */
+        html[data-theme="light"] .message.user .msg-bubble {
+            color: white;
+        }
+
+        html[data-theme="light"] .msg-bubble {
+            color: var(--text-primary);
+        }
+
+        html[data-theme="light"] .msg-bubble code:not(pre code) {
+            background: rgba(124,58,237,0.12);
+            color: #6d28d9;
+            border-color: rgba(124,58,237,0.2);
+        }
+
+        html[data-theme="light"] .msg-bubble pre code {
+            color: #e0d7ff;
+        }
+
+        html[data-theme="light"] .error-toast {
+            background: #fff0f0;
+            border-color: #fca5a5;
+            color: #b91c1c;
+        }
+
+        html[data-theme="light"] .modal-overlay {
+            background: rgba(0,0,0,0.35);
+        }
+
+        /* ── Theme Palette ── */
+        .theme-palette {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .theme-palette-label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-right: 2px;
+        }
+
+        .theme-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .theme-swatch:hover {
+            transform: scale(1.2);
+        }
+
+        .theme-swatch.active {
+            border-color: var(--accent-light);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        .theme-swatch[data-swatch="dark"]     { background: #0a0a0f; }
+        .theme-swatch[data-swatch="light"]    { background: linear-gradient(135deg, #f5f3ff, #c4b5fd); }
+        .theme-swatch[data-swatch="midnight"] { background: #000000; border-color: rgba(255,255,255,0.15); }
+        .theme-swatch[data-swatch="ocean"]    { background: linear-gradient(135deg, #070e1c, #0ea5e9); }
+
+        .theme-swatch[data-swatch="midnight"].active { border-color: #c4b5fd; }
+
         @media (max-width: 768px) {
             .sidebar { display: none; }
         }
@@ -799,6 +1127,14 @@
 
     {{-- ─── Sidebar ──────────────────────────────────────────────────── --}}
     <aside class="sidebar">
+        <div class="theme-palette">
+            <span class="theme-palette-label">Theme</span>
+            <div class="theme-swatch active" data-swatch="dark"    onclick="setTheme('dark')"     title="Dark"></div>
+            <div class="theme-swatch"        data-swatch="light"   onclick="setTheme('light')"    title="Light"></div>
+            <div class="theme-swatch"        data-swatch="midnight" onclick="setTheme('midnight')" title="Midnight"></div>
+            <div class="theme-swatch"        data-swatch="ocean"   onclick="setTheme('ocean')"    title="Ocean"></div>
+        </div>
+
         <div class="sidebar-header">
             <div class="sidebar-brand">
                 <div class="brand-icon">✦</div>
@@ -808,15 +1144,12 @@
                 </div>
             </div>
 
-            <form action="{{ route('chat.store') }}" method="POST">
-                @csrf
-                <button type="submit" class="new-chat-btn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    New chat
-                </button>
-            </form>
+            <button type="button" class="new-chat-btn" onclick="openProviderModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New chat
+            </button>
         </div>
 
         <div class="sessions-list">
@@ -825,10 +1158,13 @@
                 <a href="{{ route('chat.show', $session) }}"
                    class="session-item {{ $session->id === $chatSession->id ? 'active' : '' }}"
                    title="{{ $session->title }}">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
-                    {{ Str::limit($session->title, 32) }}
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">{{ Str::limit($session->title, 24) }}</span>
+                    <span class="session-provider-badge {{ $session->ai_provider === 'gemini' ? 'badge-gemini' : 'badge-claude' }}">
+                        {{ $session->ai_provider === 'gemini' ? 'Gemini' : 'Claude' }}
+                    </span>
                 </a>
             @endforeach
         </div>
@@ -937,27 +1273,76 @@
             <div class="input-wrapper">
                 <textarea
                     id="message-input"
-                    placeholder="Message Claude…"
-                    rows="1"
+                    placeholder="Message {{ $chatSession->ai_provider === 'gemini' ? 'Gemini' : 'Claude' }}…"
+                    rows="3"
                     autofocus
                 ></textarea>
-                <button class="file-btn" id="file-btn" onclick="triggerFileInput()" title="Attach files">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-                    </svg>
-                </button>
-                <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send message">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
-                </button>
+                <div style="display:flex;flex-direction:column;gap:6px;align-self:flex-end">
+                    <button class="file-btn" id="file-btn" onclick="triggerFileInput()" title="Attach files">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                        </svg>
+                    </button>
+                    <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send message">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.csv,.xlsx,.json,.pptx,.odt">
-            <div class="input-footer">Claude can make mistakes. Consider checking important information.</div>
+
+            <div class="model-switcher">
+                <span class="model-switcher-label">Model:</span>
+                <div class="model-pills">
+                    <button type="button"
+                        id="pill-claude"
+                        class="model-pill {{ $chatSession->ai_provider !== 'gemini' ? 'active-claude' : '' }}"
+                        onclick="switchModel('claude')">
+                        🧠 Claude
+                    </button>
+                    <button type="button"
+                        id="pill-gemini"
+                        class="model-pill {{ $chatSession->ai_provider === 'gemini' ? 'active-gemini' : '' }}"
+                        onclick="switchModel('gemini')">
+                        🌟 Gemini
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-footer" id="input-footer">
+                {{ $chatSession->ai_provider === 'gemini' ? 'Gemini' : 'Claude' }} can make mistakes. Consider checking important information.
+            </div>
         </div>
     </div>
 
 </div>
+
+{{-- ─── Provider Selection Modal ──────────────────────────────────── --}}
+<div class="modal-overlay" id="provider-modal" onclick="handleModalClick(event)">
+    <div class="modal-card" style="position:relative">
+        <button class="modal-close" onclick="closeProviderModal()" title="Close">✕</button>
+        <div class="modal-title">Choose AI Model</div>
+        <div class="modal-subtitle">Select the AI provider for your new chat session.</div>
+        <div class="provider-options">
+            <button type="button" class="provider-option" onclick="startChat('claude')">
+                <div class="provider-option-icon">🧠</div>
+                <div class="provider-option-name">Claude</div>
+                <div class="provider-option-desc">Anthropic's model via AWS Bedrock. Great for reasoning, coding &amp; analysis.</div>
+            </button>
+            <button type="button" class="provider-option" onclick="startChat('gemini')">
+                <div class="provider-option-icon">🌟</div>
+                <div class="provider-option-name">Gemini</div>
+                <div class="provider-option-desc">Google's Gemini model. Excellent for multimodal tasks &amp; large context.</div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<form id="new-chat-form" action="{{ route('chat.store') }}" method="POST" style="display:none">
+    @csrf
+    <input type="hidden" name="ai_provider" id="new-chat-provider" value="">
+</form>
 
 <script>
     const SESSION_ID   = {{ $chatSession->id }};
@@ -975,7 +1360,7 @@
     // Auto-resize textarea
     input.addEventListener('input', () => {
         input.style.height = 'auto';
-        input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+        input.style.height = Math.min(Math.max(input.scrollHeight, 72), 240) + 'px';
     });
 
     // Send on Enter (Shift+Enter for newline)
@@ -1276,6 +1661,117 @@
 
     // Initial scroll
     scrollToBottom();
+
+    // ── Model Switcher ──────────────────────────────────────────────────
+    const UPDATE_PROVIDER_URL = '{{ route('chat.update-provider', $chatSession) }}';
+    let currentProvider = '{{ $chatSession->ai_provider ?? 'claude' }}';
+
+    async function switchModel(provider) {
+        if (provider === currentProvider) return;
+
+        const pillClaude = document.getElementById('pill-claude');
+        const pillGemini = document.getElementById('pill-gemini');
+        pillClaude.classList.add('switching');
+        pillGemini.classList.add('switching');
+
+        try {
+            const res = await fetch(UPDATE_PROVIDER_URL, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ ai_provider: provider }),
+            });
+
+            if (!res.ok) throw new Error();
+
+            currentProvider = provider;
+
+            // Update pills
+            pillClaude.className = 'model-pill' + (provider === 'claude' ? ' active-claude' : '');
+            pillGemini.className = 'model-pill' + (provider === 'gemini' ? ' active-gemini' : '');
+
+            // Update header subtitle
+            const subtitle = document.querySelector('.chat-subtitle');
+            if (subtitle) {
+                subtitle.innerHTML = provider === 'gemini'
+                    ? '<span title="Using Google Gemini">🌟 Gemini</span> &middot; AI Assistant'
+                    : '<span title="Using Claude via AWS Bedrock">🧠 Claude</span> &middot; AI Assistant';
+            }
+
+            // Update textarea placeholder and footer
+            const providerName = provider === 'gemini' ? 'Gemini' : 'Claude';
+            input.placeholder = `Message ${providerName}…`;
+            const footer = document.getElementById('input-footer');
+            if (footer) footer.textContent = `${providerName} can make mistakes. Consider checking important information.`;
+
+            // Update sidebar badge for active session
+            const activeBadge = document.querySelector('.session-item.active .session-provider-badge');
+            if (activeBadge) {
+                activeBadge.textContent = providerName;
+                activeBadge.className = 'session-provider-badge ' + (provider === 'gemini' ? 'badge-gemini' : 'badge-claude');
+            }
+
+        } catch {
+            showError('Failed to switch model. Please try again.');
+        } finally {
+            pillClaude.classList.remove('switching');
+            pillGemini.classList.remove('switching');
+        }
+    }
+
+    // ── Provider Modal ──────────────────────────────────────────────────
+    function openProviderModal() {
+        document.getElementById('provider-modal').classList.add('open');
+    }
+
+    function closeProviderModal() {
+        document.getElementById('provider-modal').classList.remove('open');
+    }
+
+    function handleModalClick(e) {
+        if (e.target === document.getElementById('provider-modal')) {
+            closeProviderModal();
+        }
+    }
+
+    function startChat(provider) {
+        document.getElementById('new-chat-provider').value = provider;
+        document.getElementById('new-chat-form').submit();
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeProviderModal();
+    });
+
+    // ── Theme Switcher ──────────────────────────────────────────────────
+    const THEMES = ['dark', 'light', 'midnight', 'ocean'];
+
+    function setTheme(theme) {
+        if (!THEMES.includes(theme)) return;
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('ai-chatbot-theme', theme);
+
+        // Update active swatch
+        document.querySelectorAll('.theme-swatch').forEach(s => {
+            s.classList.toggle('active', s.dataset.swatch === theme);
+        });
+    }
+
+    // Apply saved theme on load
+    (function () {
+        const saved = localStorage.getItem('ai-chatbot-theme');
+        if (saved && THEMES.includes(saved)) {
+            setTheme(saved);
+        } else {
+            // Mark default swatch as active
+            const defaultSwatch = document.querySelector('.theme-swatch[data-swatch="dark"]');
+            if (defaultSwatch) defaultSwatch.classList.add('active');
+        }
+    })();
 </script>
 </body>
 </html>
