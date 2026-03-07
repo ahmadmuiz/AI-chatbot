@@ -48,7 +48,7 @@ class GeminiService
             ];
         }, $messages);
 
-        $endpoint = "{$this->model}:generateContent?key={$this->apiKey}";
+        $endpoint = "{$this->baseUrl}/{$this->model}:generateContent?key={$this->apiKey}";
 
         $payload = [
             'contents'      => $geminiMessages,
