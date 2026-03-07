@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +27,19 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Block disabled users immediately after authentication
+        if (! Auth::user()->is_active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Your account has been disabled. Please contact an administrator.']);
+        }
+
         $request->session()->regenerate();
+
+        AuditService::log('user.login', 'User logged in successfully', Auth::user());
 
         return redirect()->intended(route('chat.index', absolute: false));
     }
@@ -36,6 +49,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+
+        AuditService::log('user.logout', 'User logged out', $user);
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

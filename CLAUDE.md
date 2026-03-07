@@ -43,18 +43,34 @@ The provider is stored on `chat_sessions.ai_provider` and resolved at message-se
 
 ### Data Models
 
-- `User` → has many `ChatSession`
+- `User` — fields: `is_admin`, `is_active`, `must_change_password`, `disabled_at`; has many `ChatSession`, `AuditLog`
 - `ChatSession` — stores `title`, `ai_provider`; has many `ChatMessage`
 - `ChatMessage` — stores `role` (`user`|`assistant`), `content`; has many `ChatAttachment`
 - `ChatAttachment` — stores file metadata; files persisted to `storage/app/private/uploads/`
+- `AuditLog` — stores `event`, `description`, `ip_address`, `user_agent`, `metadata` (JSON); has `user_id` (subject) and `actor_id` (who acted)
 
 ### File Uploads
 
 `FileUploadService` stores files with UUID names. `ClaudeService` handles attachments in `processMessagesWithAttachments()`: images are base64-encoded for vision, text/JSON/CSV files are sent as inline text, binary files get a placeholder message.
 
+### Admin Panel
+
+Routes prefixed `/admin`, protected by `admin` middleware alias (`EnsureUserIsAdmin`). Controllers live in `app/Http/Controllers/Admin/`.
+
+- **`UserManagementController`** — list/search users, disable/enable accounts, reset passwords (generates a 12-char temp password flashed once to the session; sets `must_change_password = true`)
+- **`AuditLogController`** — filterable audit log viewer (by user, event type, date range)
+
+**`AuditService::log()`** is a static helper called throughout the app to record events. It never throws — failures are silently swallowed so audit logging never breaks the main flow.
+
+### Middleware
+
+Registered as aliases in `bootstrap/app.php`:
+- `admin` (`EnsureUserIsAdmin`) — 403s non-admins
+- `active` (`EnsureUserIsActive`) — appended to the `web` group globally; logs out and redirects disabled users to login
+
 ### Frontend
 
-Single Blade view at `resources/views/chat/index.blade.php`. Messages use vanilla JS with `fetch` (FormData for multipart uploads). Markdown in AI responses is rendered server-side via `MarkdownRenderer` (wraps `Str::markdown()`).
+Single Blade view at `resources/views/chat/index.blade.php`. Admin views at `resources/views/admin/`. Messages use vanilla JS with `fetch` (FormData for multipart uploads). Markdown in AI responses is rendered server-side via `MarkdownRenderer` (wraps `Str::markdown()`).
 
 ## Environment Variables
 

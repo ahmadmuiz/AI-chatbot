@@ -439,6 +439,11 @@
             animation: message-in 0.3s ease-out;
         }
 
+        .message > div:not(.msg-avatar) {
+            min-width: 0;
+            flex: 1;
+        }
+
         @keyframes message-in {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -477,6 +482,7 @@
             font-size: 14px;
             line-height: 1.65;
             max-width: calc(100% - 44px);
+            word-break: break-word;
         }
 
         .message.user .msg-bubble {
@@ -1120,6 +1126,48 @@
         @media (max-width: 768px) {
             .sidebar { display: none; }
         }
+
+        /* ── Copy Button ── */
+        .msg-wrapper {
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .msg-wrapper:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: rgba(124,58,237,0.2);
+            color: var(--accent-light);
+            border-color: rgba(124,58,237,0.4);
+        }
+
+        .copy-btn.copied {
+            background: rgba(16,185,129,0.15);
+            color: #6ee7b7;
+            border-color: rgba(16,185,129,0.3);
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -1170,6 +1218,23 @@
         </div>
 
         <div class="sidebar-footer">
+            @if(auth()->user()->is_admin)
+            <a href="{{ route('admin.users.index') }}" style="
+                display:flex;align-items:center;gap:8px;
+                padding:8px 10px;border-radius:8px;
+                text-decoration:none;color:#a78bfa;
+                font-size:12px;font-weight:500;
+                background:rgba(124,58,237,0.1);
+                border:1px solid rgba(124,58,237,0.2);
+                margin-bottom:8px;
+                transition:all 0.15s;
+            " onmouseover="this.style.background='rgba(124,58,237,0.2)'" onmouseout="this.style.background='rgba(124,58,237,0.1)'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+                </svg>
+                Admin Panel
+            </a>
+            @endif
             <div class="user-info">
                 <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
                 <div style="min-width:0;flex:1">
@@ -1233,13 +1298,23 @@
                             @endif
                         </div>
                         <div>
-                            <div class="msg-bubble">
-                                @if($msg->role === 'user')
+                            @if($msg->role === 'user')
+                                <div class="msg-bubble">
                                     {!! nl2br(e($msg->content)) !!}
-                                @else
-                                    {!! \App\Services\MarkdownRenderer::render($msg->content) !!}
-                                @endif
-                            </div>
+                                </div>
+                            @else
+                                <div class="msg-wrapper">
+                                    <div class="msg-bubble">
+                                        {!! \App\Services\MarkdownRenderer::render($msg->content) !!}
+                                    </div>
+                                    <button class="copy-btn" title="Copy response" onclick="copyMessage(this)">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            @endif
                             @if($msg->attachments->isNotEmpty())
                                 <div class="msg-attachments">
                                     @foreach($msg->attachments as $attachment)
@@ -1551,10 +1626,22 @@
             }
         }
 
+        const copyBtnHtml = !isUser ? `
+            <button class="copy-btn" title="Copy response" onclick="copyMessage(this)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+            </button>` : '';
+
+        const bubbleWrapper = !isUser
+            ? `<div class="msg-wrapper"><div class="msg-bubble">${bubbleContent}</div>${copyBtnHtml}</div>`
+            : `<div class="msg-bubble">${bubbleContent}</div>`;
+
         msgEl.innerHTML = `
             <div class="msg-avatar">${name}</div>
             <div>
-                <div class="msg-bubble">${bubbleContent}</div>
+                ${bubbleWrapper}
                 <div class="msg-time">${time}</div>
             </div>
         `;
@@ -1586,6 +1673,24 @@
         toast.textContent = msg;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 4000);
+    }
+
+    async function copyMessage(btn) {
+        const bubble = btn.closest('.msg-wrapper').querySelector('.msg-bubble');
+        const text = bubble.innerText;
+        try {
+            await navigator.clipboard.writeText(text);
+            btn.classList.add('copied');
+            btn.title = 'Copied!';
+            btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.title = 'Copy response';
+                btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+            }, 2000);
+        } catch (e) {
+            showError('Could not copy to clipboard.');
+        }
     }
 
     async function sendMessage() {

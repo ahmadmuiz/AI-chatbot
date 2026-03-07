@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ChatMessageRequest;
 use App\Models\ChatSession;
 use App\Services\AIServiceFactory;
+use App\Services\AuditService;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -123,6 +124,18 @@ class ChatController extends Controller
             'role'    => 'assistant',
             'content' => $assistantText,
         ]);
+
+        // Audit log
+        AuditService::log(
+            'chat.message',
+            'User sent a chat message',
+            auth()->user(),
+            [
+                'session_id'    => $chatSession->id,
+                'provider'      => $chatSession->ai_provider,
+                'message_chars' => strlen($request->message),
+            ],
+        );
 
         return response()->json([
             'message' => $assistantText,
