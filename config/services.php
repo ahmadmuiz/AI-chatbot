@@ -59,4 +59,28 @@ return [
         'use_bedrock'    => env('CLAUDE_CODE_USE_BEDROCK', false),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Gemini API Configuration
+    |--------------------------------------------------------------------------
+    | Google's Gemini API for generative AI capabilities
+    |
+    | GEMINI_API_KEY       — API key from Google AI Studio
+    | GEMINI_MODEL         — Model identifier (e.g., gemini-1.5-flash, gemini-1.5-pro)
+    */
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model'   => env('GEMINI_MODEL', 'gemini-1.5-flash'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Service Provider Selection
+    |--------------------------------------------------------------------------
+    | Choose which AI provider to use: 'claude' or 'gemini'
+    |
+    | AI_PROVIDER          — 'claude' (default) or 'gemini'
+    */
+    'ai_provider' => env('AI_PROVIDER', 'claude'),
+
 ];

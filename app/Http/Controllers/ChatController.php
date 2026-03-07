@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ChatMessageRequest;
 use App\Models\ChatSession;
-use App\Services\ClaudeService;
+use App\Services\AIServiceFactory;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -13,7 +13,6 @@ use Illuminate\View\View;
 class ChatController extends Controller
 {
     public function __construct(
-        protected ClaudeService $claude,
         protected FileUploadService $fileUploadService,
     ) {}
 
@@ -100,8 +99,9 @@ class ChatController extends Controller
             })
             ->toArray();
 
-        // Call Claude
-        $assistantText = $this->claude->chat($history);
+        // Call AI service (Claude or Gemini based on configuration)
+        $aiService = AIServiceFactory::make();
+        $assistantText = $aiService->chat($history);
 
         // Persist assistant message
         $chatSession->messages()->create([
