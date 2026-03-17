@@ -16,7 +16,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key');
-        $this->model = config('services.gemini.model', 'gemini-1.5-flash');
+        $this->model = config('services.gemini.model', 'gemini-pro-latest');
 
         if (!$this->apiKey) {
             throw new \RuntimeException('Gemini API key is not configured. Set GEMINI_API_KEY in .env');

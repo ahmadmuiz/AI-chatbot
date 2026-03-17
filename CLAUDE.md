@@ -23,23 +23,26 @@ php artisan migrate
 # Lint PHP with Pint
 ./vendor/bin/pint
 
-# Build frontend assets
+# Build frontend assets (Vite)
 npm run build
+
+# Build frontend assets in watch mode (auto-rebuild on changes)
+npm run dev
 ```
 
 ## Architecture
 
-This is a **Laravel 12** AI chatbot with multi-provider support, authentication (via Laravel Breeze), and file upload capability. The database defaults to SQLite.
+This is a **Laravel 12** AI chatbot with multi-provider support, authentication (via Laravel Breeze), and file upload capability. The database defaults to SQLite but is swappable to MySQL/PostgreSQL by changing `DB_CONNECTION` in `.env`.
 
 ### AI Provider Layer
 
 Two AI services are available per chat session, selected at session creation:
 
-- **`ClaudeService`** (`app/Services/ClaudeService.php`) — calls Claude via **AWS Bedrock** using a bearer token (not SDK). Sends requests directly via Guzzle to `bedrock-runtime.{region}.amazonaws.com/model/{modelId}/invoke`.
+- **`ClaudeService`** (`app/Services/ClaudeService.php`) — calls Claude via **AWS Bedrock** using a bearer token via Guzzle (`bedrock-runtime.{region}.amazonaws.com/model/{modelId}/invoke`). Also uses the `anthropic-ai/sdk` package for structured request/response handling.
 - **`GeminiService`** (`app/Services/GeminiService.php`) — calls Google Gemini REST API using an API key.
-- **`AIServiceFactory`** (`app/Services/AIServiceFactory.php`) — static factory; `ChatController` resolves the correct service from `ChatSession::$ai_provider`.
+- **`AIServiceFactory`** (`app/Services/AIServiceFactory.php`) — static factory; resolves the correct service from `ChatSession::$ai_provider`.
 
-The provider is stored on `chat_sessions.ai_provider` and resolved at message-send time in `ChatController::getAIServiceForSession()`.
+The provider is stored on `chat_sessions.ai_provider` and resolved at message-send time in `ChatController::sendMessage()`.
 
 ### Data Models
 
@@ -68,13 +71,32 @@ Registered as aliases in `bootstrap/app.php`:
 - `admin` (`EnsureUserIsAdmin`) — 403s non-admins
 - `active` (`EnsureUserIsActive`) — appended to the `web` group globally; logs out and redirects disabled users to login
 
-### Frontend
+### Frontend & Assets
 
 Single Blade view at `resources/views/chat/index.blade.php`. Admin views at `resources/views/admin/`. Messages use vanilla JS with `fetch` (FormData for multipart uploads). Markdown in AI responses is rendered server-side via `MarkdownRenderer` (wraps `Str::markdown()`).
+
+**Asset Building:** Vite is used for asset bundling (`resources/js/app.js`, CSS). Run `npm run dev` during development for hot reload, or `npm run build` for production.
+
+### Queue System
+
+The app uses Laravel's **database queue** (`QUEUE_CONNECTION=database`) for background jobs. Run `php artisan queue:listen` to process jobs. The `composer dev` command starts the queue listener automatically alongside the server.
 
 ## Environment Variables
 
 ```
+# Database (default: SQLite; swap to mysql/pgsql by changing DB_CONNECTION)
+DB_CONNECTION=sqlite
+
+# Session (database driver stores sessions in database; lifetime in minutes)
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+
+# Queue (database driver; processed by queue:listen)
+QUEUE_CONNECTION=database
+
+# Cache & Session Store
+CACHE_STORE=database
+
 # AWS Bedrock (Claude)
 AWS_BEARER_TOKEN_BEDROCK=     # IAM Identity Center temporary token
 AWS_BEDROCK_MODEL_ID=         # e.g. global.anthropic.claude-haiku-4-5-20251001-v1:0
@@ -82,5 +104,8 @@ AWS_REGION=                   # e.g. ap-southeast-3
 
 # Google Gemini
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-1.5-flash  # optional, this is the default
+GEMINI_MODEL=gemini-2.0-flash # optional, default is gemini-2.0-flash
+
+# AI Provider Selection
+AI_PROVIDER=claude             # 'claude' or 'gemini' (default provider for new sessions)
 ```
