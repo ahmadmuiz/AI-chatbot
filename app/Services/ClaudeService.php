@@ -22,15 +22,13 @@ class ClaudeService
         $this->model   = config('services.aws.bedrock_model', 'global.anthropic.claude-haiku-4-5-20251001-v1:0');
         $this->baseUrl = "https://bedrock-runtime.{$this->region}.amazonaws.com";
 
-        // Bearer token read directly from env at request time — never stored in memory longer than needed
+        // Bearer token is read per-request (not stored in constructor) to support token refresh
         $this->http = new HttpClient([
             'base_uri' => $this->baseUrl,
             'timeout'  => 60,
             'headers'  => [
                 'Content-Type' => 'application/json',
                 'Accept'       => 'application/json',
-                // AWS Bedrock bearer token auth (IAM Identity Center / temporary token)
-                'Authorization' => 'Bearer ' . config('services.aws.bearer_token'),
             ],
         ]);
     }
@@ -57,7 +55,13 @@ class ClaudeService
         ];
 
         try {
-            $response = $this->http->post($path, ['json' => $payload]);
+            $response = $this->http->post($path, [
+                'json'    => $payload,
+                // Bearer token read fresh per-request to support IAM Identity Center token refresh
+                'headers' => [
+                    'Authorization' => 'Bearer ' . config('services.aws.bearer_token'),
+                ],
+            ]);
             $body     = json_decode((string) $response->getBody(), true);
 
             return $body['content'][0]['text'] ?? 'Sorry, I could not generate a response.';

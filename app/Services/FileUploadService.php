@@ -71,9 +71,16 @@ class FileUploadService
     {
         if (str_starts_with($mimeType, 'image/')) {
             return 'image';
-        } elseif (str_contains($mimeType, ['application/pdf', 'application/msword', 'text/plain'])) {
+        } elseif (
+            str_starts_with($mimeType, 'text/') ||
+            in_array($mimeType, ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+        ) {
             return 'document';
-        } elseif (str_contains($mimeType, ['csv', 'spreadsheet', 'json'])) {
+        } elseif (
+            str_contains($mimeType, 'csv') ||
+            str_contains($mimeType, 'spreadsheet') ||
+            str_contains($mimeType, 'json')
+        ) {
             return 'data';
         }
 
