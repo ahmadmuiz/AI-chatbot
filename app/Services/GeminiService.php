@@ -62,6 +62,9 @@ class GeminiService
                     ['text' => 'You are Gemini, a helpful, friendly, and knowledgeable AI assistant made by Google. Provide clear, concise, and accurate responses.'],
                 ],
             ],
+            'tools' => [
+                ['google_search' => (object) []],
+            ],
         ];
 
         try {
