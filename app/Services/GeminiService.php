@@ -16,7 +16,7 @@ class GeminiService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.api_key');
-        $this->model = config('services.gemini.model', 'gemini-1.5-flash');
+        $this->model = config('services.gemini.model', 'gemini-3-flash-preview');
 
         if (!$this->apiKey) {
             throw new \RuntimeException('Gemini API key is not configured. Set GEMINI_API_KEY in .env');
@@ -59,7 +59,7 @@ class GeminiService
             ],
             'systemInstruction' => [
                 'parts' => [
-                    ['text' => 'You are a helpful, friendly, and knowledgeable AI assistant called Claude. Provide clear, concise, and accurate responses.'],
+                    ['text' => 'You are Gemini, a helpful, friendly, and knowledgeable AI assistant made by Google. Provide clear, concise, and accurate responses.'],
                 ],
             ],
         ];

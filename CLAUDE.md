@@ -44,14 +44,19 @@ The provider is stored on `chat_sessions.ai_provider` and resolved at message-se
 ### Data Models
 
 - `User` — fields: `is_admin`, `is_active`, `must_change_password`, `disabled_at`; has many `ChatSession`, `AuditLog`
-- `ChatSession` — stores `title`, `ai_provider`; has many `ChatMessage`
+- `ChatSession` — stores `title`, `ai_provider`, `system_prompt` (nullable); has many `ChatMessage`
 - `ChatMessage` — stores `role` (`user`|`assistant`), `content`; has many `ChatAttachment`
 - `ChatAttachment` — stores file metadata; files persisted to `storage/app/private/uploads/`
 - `AuditLog` — stores `event`, `description`, `ip_address`, `user_agent`, `metadata` (JSON); has `user_id` (subject) and `actor_id` (who acted)
 
 ### File Uploads
 
-`FileUploadService` stores files with UUID names. `ClaudeService` handles attachments in `processMessagesWithAttachments()`: images are base64-encoded for vision, text/JSON/CSV files are sent as inline text, binary files get a placeholder message.
+`FileUploadService` stores files with UUID names. `ClaudeService` handles attachments in `processMessagesWithAttachments()`: images are base64-encoded for vision, text/JSON/CSV files are sent as inline text. Rich file extraction via `buildFileContentBlock()`:
+- **PDF** — text extracted with `smalot/pdfparser`
+- **XLSX/XLS** — extracted with `PhpSpreadsheet`
+- **DOCX** — text extracted directly from ZIP XML
+- **Legacy .doc** — unsupported; user prompted to convert
+- **Other binary** — placeholder message shown
 
 ### Admin Panel
 
@@ -82,5 +87,5 @@ AWS_REGION=                   # e.g. ap-southeast-3
 
 # Google Gemini
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-1.5-flash  # optional, this is the default
+GEMINI_MODEL=gemini-2.0-flash-lite  # optional, this is the default
 ```

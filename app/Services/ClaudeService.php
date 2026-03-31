@@ -8,6 +8,8 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory as SpreadsheetIOFactory;
+use Smalot\PdfParser\Parser as PdfParser;
 
 class ClaudeService
 {
@@ -191,13 +193,44 @@ class ClaudeService
             ];
         }
 
-        // Binary files (PDF, DOCX, etc): Encode as base64 with metadata
-        // Note: Claude's vision can analyze PDF images, but for full PDF content
-        // you would need to use Claude's Files API (requires different approach)
+        // PDF: extract text with smalot/pdfparser
+        if ($mimeType === 'application/pdf') {
+            return $this->extractPdfContent($attachment, $fileContent);
+        }
+
+        // Excel: extract with PhpSpreadsheet
+        if (
+            str_contains($mimeType, 'spreadsheet') ||
+            in_array($mimeType, [
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])
+        ) {
+            return $this->extractExcelContent($attachment, $fileContent);
+        }
+
+        // Word DOCX: extract from ZIP XML
+        if ($mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            return $this->extractDocxContent($attachment, $fileContent);
+        }
+
+        // Legacy .doc binary — cannot extract without external tools
+        if ($mimeType === 'application/msword') {
+            return [
+                'type' => 'text',
+                'text' => sprintf(
+                    "[Word Document: %s (%s) — Legacy .doc format cannot be parsed. Please convert to .docx or .txt and re-upload.]",
+                    $attachment->original_filename,
+                    $this->formatFileSize($attachment->file_size)
+                ),
+            ];
+        }
+
+        // Unknown binary fallback
         return [
             'type' => 'text',
             'text' => sprintf(
-                "[Binary File: %s (%s, %s) - Unable to fully extract content. For detailed analysis, please convert to text/PDF format or use Claude's Files API]",
+                "[Unsupported File: %s (%s, %s) — This file type cannot be read. Please convert to a supported format (text, PDF, DOCX, XLSX, image).]",
                 $attachment->original_filename,
                 $mimeType,
                 $this->formatFileSize($attachment->file_size)
@@ -225,6 +258,128 @@ class ClaudeService
         }
 
         return false;
+    }
+
+    /**
+     * Extract text from a PDF file using smalot/pdfparser.
+     */
+    private function extractPdfContent(ChatAttachment $attachment, string $fileContent): array
+    {
+        try {
+            $parser = new PdfParser();
+            $pdf    = $parser->parseContent($fileContent);
+            $text   = $pdf->getText();
+
+            if (empty(trim($text))) {
+                $text = '[PDF appears to contain only images or scanned content — no extractable text found.]';
+            } else {
+                // Trim to avoid token explosion on very large PDFs
+                $text = substr($text, 0, 15000);
+                if (strlen($pdf->getText()) > 15000) {
+                    $text .= "\n\n[... content truncated to first 15,000 characters ...]";
+                }
+            }
+
+            return [
+                'type' => 'text',
+                'text' => "PDF File: {$attachment->original_filename}\n\n{$text}",
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('PDF extraction failed', ['file' => $attachment->original_filename, 'error' => $e->getMessage()]);
+            return [
+                'type' => 'text',
+                'text' => "[PDF File: {$attachment->original_filename} — Could not extract text: {$e->getMessage()}]",
+            ];
+        }
+    }
+
+    /**
+     * Extract text from an Excel file (.xlsx / .xls) using PhpSpreadsheet.
+     */
+    private function extractExcelContent(ChatAttachment $attachment, string $fileContent): array
+    {
+        try {
+            // Write to a temp file because PhpSpreadsheet needs a file path
+            $tmpPath = tempnam(sys_get_temp_dir(), 'excel_') . '_' . $attachment->stored_filename;
+            file_put_contents($tmpPath, $fileContent);
+
+            $spreadsheet = SpreadsheetIOFactory::load($tmpPath);
+            @unlink($tmpPath);
+
+            $text = "Excel File: {$attachment->original_filename}\n";
+            foreach ($spreadsheet->getAllSheets() as $sheet) {
+                $text .= "\n--- Sheet: {$sheet->getTitle()} ---\n";
+                $rows = $sheet->toArray(null, true, true, true);
+                $rowCount = 0;
+                foreach ($rows as $row) {
+                    $text .= implode(" | ", array_map(fn ($v) => (string) ($v ?? ''), $row)) . "\n";
+                    if (++$rowCount >= 200) {
+                        $text .= "[... truncated after 200 rows ...]\n";
+                        break;
+                    }
+                }
+            }
+
+            return ['type' => 'text', 'text' => substr($text, 0, 15000)];
+        } catch (\Throwable $e) {
+            Log::warning('Excel extraction failed', ['file' => $attachment->original_filename, 'error' => $e->getMessage()]);
+            return [
+                'type' => 'text',
+                'text' => "[Excel File: {$attachment->original_filename} — Could not extract content: {$e->getMessage()}]",
+            ];
+        }
+    }
+
+    /**
+     * Extract text from a DOCX file using ZipArchive + XML parsing (no binary deps).
+     */
+    private function extractDocxContent(ChatAttachment $attachment, string $fileContent): array
+    {
+        try {
+            // DOCX is a ZIP; write to temp file to use ZipArchive
+            $tmpPath = tempnam(sys_get_temp_dir(), 'docx_') . '.docx';
+            file_put_contents($tmpPath, $fileContent);
+
+            $zip = new \ZipArchive();
+            if ($zip->open($tmpPath) !== true) {
+                throw new \RuntimeException('Could not open DOCX as ZIP archive.');
+            }
+
+            $xmlContent = $zip->getFromName('word/document.xml');
+            $zip->close();
+            @unlink($tmpPath);
+
+            if ($xmlContent === false) {
+                throw new \RuntimeException('word/document.xml not found inside DOCX.');
+            }
+
+            // Strip XML tags, decode entities, collapse whitespace
+            $text = strip_tags(str_replace(
+                ['</w:p>', '</w:tr>'],
+                ["\n", "\n"],
+                $xmlContent
+            ));
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_XML1, 'UTF-8');
+            $text = preg_replace('/[ \t]+/', ' ', $text);
+            $text = preg_replace('/\n{3,}/', "\n\n", trim($text));
+
+            if (empty($text)) {
+                $text = '[DOCX appears to contain no readable text.]';
+            } else {
+                $text = substr($text, 0, 15000);
+            }
+
+            return [
+                'type' => 'text',
+                'text' => "Word Document: {$attachment->original_filename}\n\n{$text}",
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('DOCX extraction failed', ['file' => $attachment->original_filename, 'error' => $e->getMessage()]);
+            return [
+                'type' => 'text',
+                'text' => "[Word Document: {$attachment->original_filename} — Could not extract content: {$e->getMessage()}]",
+            ];
+        }
     }
 
     /**
