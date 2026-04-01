@@ -1127,6 +1127,152 @@
             .sidebar { display: none; }
         }
 
+        /* ── File Download Chips ── */
+        .msg-file-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .file-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px 5px 8px;
+            background: rgba(124,58,237,0.12);
+            border: 1px solid rgba(124,58,237,0.28);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--accent-light);
+            text-decoration: none;
+            transition: all 0.18s;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-chip:hover {
+            background: rgba(124,58,237,0.25);
+            border-color: rgba(124,58,237,0.5);
+            color: #ddd6fe;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 12px rgba(124,58,237,0.2);
+        }
+
+        .file-chip-icon { font-size: 13px; flex-shrink: 0; }
+        .file-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-chip-size { opacity: 0.6; flex-shrink: 0; font-size: 10px; }
+
+        /* ── Memory Modal ── */
+        .memory-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        .memory-modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .memory-modal-card {
+            background: var(--modal-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 640px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(124,58,237,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transform: translateY(12px);
+            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .memory-modal-overlay.open .memory-modal-card {
+            transform: translateY(0);
+        }
+
+        .memory-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .memory-modal-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(79,70,229,0.3));
+            border: 1px solid rgba(124,58,237,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+        }
+
+        #memory-textarea {
+            width: 100%;
+            min-height: 220px;
+            max-height: 400px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.65;
+            padding: 14px 16px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        #memory-textarea:focus {
+            border-color: rgba(124,58,237,0.5);
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.08);
+        }
+
+        .memory-save-btn {
+            align-self: flex-end;
+            padding: 9px 22px;
+            border-radius: 10px;
+            background: var(--user-bubble);
+            color: white;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .memory-save-btn:hover { transform: translateY(-1px); box-shadow: 0 0 24px var(--accent-glow); }
+
+        .memory-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            padding: 10px 14px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+        }
+
         /* ── Copy Button ── */
         .msg-wrapper {
             position: relative;
@@ -1168,6 +1314,126 @@
             border-color: rgba(16,185,129,0.3);
             opacity: 1;
         }
+
+        /* ── Export Dropdown ── */
+        .export-wrapper {
+            position: absolute;
+            top: 8px;
+            right: 42px; /* sit left of the copy button */
+        }
+
+        .export-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s, color 0.2s, border-color 0.2s;
+            padding: 0;
+            font-size: 12px;
+        }
+
+        .msg-wrapper:hover .export-btn { opacity: 1; }
+
+        .export-btn:hover {
+            background: rgba(124,58,237,0.2);
+            color: var(--accent-light);
+            border-color: rgba(124,58,237,0.4);
+        }
+
+        .export-dropdown {
+            position: absolute;
+            top: 34px;
+            right: 0;
+            background: var(--modal-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 150px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            z-index: 50;
+        }
+
+        .export-wrapper.open .export-dropdown { display: flex; }
+
+        .export-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 7px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: none;
+            background: none;
+            text-align: left;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+
+        .export-option:hover {
+            background: rgba(124,58,237,0.12);
+            color: var(--accent-light);
+        }
+
+        /* ── File size warning ── */
+        .attachment-item.oversized {
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.4);
+            color: #fca5a5;
+        }
+
+        .attachment-item.oversized .size-warning {
+            font-size: 10px;
+            color: #f87171;
+            font-weight: 600;
+        }
+
+        .upload-warning-banner {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #fca5a5;
+            margin-bottom: 8px;
+            animation: message-in 0.2s ease-out;
+        }
+
+        /* ── File count badge ── */
+        .file-count-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .file-btn { position: relative; }
     </style>
 </head>
 <body>
@@ -1258,7 +1524,7 @@
 
         <div class="chat-header">
             <div class="chat-header-icon">✦</div>
-            <div>
+            <div style="flex:1;min-width:0">
                 <div class="chat-title" id="chat-session-title">{{ $chatSession->title }}</div>
                 <div class="chat-subtitle">
                     @if($chatSession->ai_provider === 'gemini')
@@ -1269,6 +1535,22 @@
                     &middot; AI Assistant
                 </div>
             </div>
+            {{-- Memory / System Prompt button --}}
+            <button id="memory-btn" onclick="openMemoryModal()" title="Configure AI Memory / System Prompt" style="
+                display:flex;align-items:center;gap:6px;
+                padding:7px 14px;border-radius:10px;
+                background:var(--glass);border:1px solid var(--glass-border);
+                color:var(--text-secondary);font-size:12px;font-weight:500;
+                cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif;
+                white-space:nowrap;
+                {{ $chatSession->system_prompt ? 'border-color:rgba(124,58,237,0.4);color:var(--accent-light);background:rgba(124,58,237,0.1);' : '' }}
+            " onmouseover="this.style.background='rgba(124,58,237,0.15)';this.style.borderColor='rgba(124,58,237,0.4)';this.style.color='var(--accent-light)'" onmouseout="resetMemoryBtnStyle(this)">
+                🧠
+                <span>Memory</span>
+                @if($chatSession->system_prompt)
+                    <span style="width:7px;height:7px;border-radius:50%;background:#a78bfa;display:inline-block"></span>
+                @endif
+            </button>
         </div>
 
         <div class="messages-area" id="messages-area">
@@ -1307,31 +1589,52 @@
                                     <div class="msg-bubble">
                                         {!! \App\Services\MarkdownRenderer::render($msg->content) !!}
                                     </div>
+                                    {{-- Copy button --}}
                                     <button class="copy-btn" title="Copy response" onclick="copyMessage(this)">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                                         </svg>
                                     </button>
+                                    {{-- Export dropdown --}}
+                                    <div class="export-wrapper" id="export-{{ $msg->id }}">
+                                        <button class="export-btn" title="Export as document"
+                                            onclick="toggleExport('export-{{ $msg->id }}')">
+                                            ↓
+                                        </button>
+                                        <div class="export-dropdown">
+                                            <a class="export-option" href="{{ route('chat.message.export', [$msg->id, 'txt']) }}" download>📄 Plain Text (.txt)</a>
+                                            <a class="export-option" href="{{ route('chat.message.export', [$msg->id, 'docx']) }}" download>📝 Word Document (.docx)</a>
+                                            <a class="export-option" href="{{ route('chat.message.export', [$msg->id, 'pdf']) }}" download>📕 PDF Document (.pdf)</a>
+                                            <a class="export-option" href="{{ route('chat.message.export', [$msg->id, 'xlsx']) }}" download>📊 Excel Spreadsheet (.xlsx)</a>
+                                        </div>
+                                    </div>
                                 </div>
                             @endif
                             @if($msg->attachments->isNotEmpty())
-                                <div class="msg-attachments">
+                                <div class="msg-file-chips">
                                     @foreach($msg->attachments as $attachment)
-                                        @if(str_starts_with($attachment->mime_type, 'image/'))
-                                            <div class="attachment-preview">
-                                                <img
-                                                    src="data:{{ $attachment->mime_type }};base64,{{ base64_encode(\Illuminate\Support\Facades\Storage::disk('local')->get($attachment->storage_path)) }}"
-                                                    alt="{{ $attachment->original_filename }}"
-                                                    title="{{ $attachment->original_filename }}"
-                                                >
-                                            </div>
-                                        @else
-                                            <a href="#" class="attachment-doc" title="{{ $attachment->original_filename }}">
-                                                <span class="attachment-icon">📄</span>
-                                                <span>{{ \Illuminate\Support\Str::limit($attachment->original_filename, 20) }}</span>
-                                            </a>
-                                        @endif
+                                        @php
+                                            $icon = match(true) {
+                                                str_starts_with($attachment->mime_type, 'image/')       => '🖼️',
+                                                $attachment->mime_type === 'application/pdf'            => '📕',
+                                                str_contains($attachment->mime_type, 'word') || str_contains($attachment->mime_type, 'document') => '📝',
+                                                str_contains($attachment->mime_type, 'sheet') || str_contains($attachment->mime_type, 'csv')    => '📊',
+                                                str_contains($attachment->mime_type, 'json')            => '📋',
+                                                default => '📄',
+                                            };
+                                            $sizeFormatted = $attachment->file_size < 1048576
+                                                ? round($attachment->file_size / 1024, 1) . ' KB'
+                                                : round($attachment->file_size / 1048576, 1) . ' MB';
+                                        @endphp
+                                        <a href="{{ route('chat.attachment.download', $attachment->id) }}"
+                                           class="file-chip"
+                                           title="Download {{ $attachment->original_filename }}"
+                                           download="{{ $attachment->original_filename }}">
+                                            <span class="file-chip-icon">{{ $icon }}</span>
+                                            <span class="file-chip-name">{{ $attachment->original_filename }}</span>
+                                            <span class="file-chip-size">({{ $sizeFormatted }})</span>
+                                        </a>
                                     @endforeach
                                 </div>
                             @endif
@@ -1366,6 +1669,9 @@
                 </div>
             </div>
             <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.csv,.xlsx,.json,.pptx,.odt">
+            <div id="upload-hint" style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+                📎 Up to 5 files &nbsp;·&nbsp; Max {{ round(intval(ini_get('upload_max_filesize')) ?: 50) }} MB each &nbsp;·&nbsp; Drop files anywhere
+            </div>
 
             <div class="model-switcher">
                 <span class="model-switcher-label">Model:</span>
@@ -1419,6 +1725,32 @@
     <input type="hidden" name="ai_provider" id="new-chat-provider" value="">
 </form>
 
+{{-- ─── Memory / System Prompt Modal ───────────────────────────────── --}}
+<div class="memory-modal-overlay" id="memory-modal" onclick="handleMemoryModalClick(event)">
+    <div class="memory-modal-card">
+        <button class="modal-close" onclick="closeMemoryModal()" title="Close">✕</button>
+        <div class="memory-modal-header">
+            <div class="memory-modal-icon">🧠</div>
+            <div>
+                <div class="modal-title">AI Memory</div>
+                <div class="modal-subtitle">Set a custom system prompt to shape how the AI behaves in this session.</div>
+            </div>
+        </div>
+        <div class="memory-hint">
+            💡 <strong>Tip:</strong> Describe the AI's role, tone, and any constraints. For example: <em>"You are a senior software architect. Answer only in bullet points with code examples."</em>
+        </div>
+        <textarea id="memory-textarea" placeholder="Enter your system prompt / AI memory here...">{{ $chatSession->system_prompt ?? '' }}</textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <button type="button" onclick="clearMemory()" style="
+                padding:7px 14px;border-radius:8px;background:none;
+                border:1px solid var(--glass-border);color:var(--text-muted);
+                font-size:12px;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif;
+            " onmouseover="this.style.borderColor='#f87171';this.style.color='#f87171'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-muted)'">Clear</button>
+            <button class="memory-save-btn" onclick="saveMemory()">Save Memory</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const SESSION_ID   = {{ $chatSession->id }};
     const CSRF_TOKEN   = document.querySelector('meta[name="csrf-token"]').content;
@@ -1430,7 +1762,13 @@
     const welcomeState = document.getElementById('welcome-state');
     const previewArea  = document.getElementById('attachments-preview');
 
-    let selectedFiles = [];
+    // PHP upload limits injected from server
+    const PHP_PER_FILE_LIMIT = {{ intval(ini_get('upload_max_filesize')) ?: 50 }} * 1024 * 1024; // bytes
+    const PHP_POST_LIMIT     = {{ intval(ini_get('post_max_size')) ?: 8 }} * 1024 * 1024;        // bytes
+    const MAX_FILES          = 5;
+
+    let selectedFiles  = [];
+    let hasOversized   = false;
 
     // Auto-resize textarea
     input.addEventListener('input', () => {
@@ -1446,9 +1784,11 @@
         }
     });
 
-    // File input handler
+    // File input handler — MERGE new files with existing selection
     fileInput.addEventListener('change', (e) => {
-        selectedFiles = Array.from(e.target.files);
+        const incoming = Array.from(e.target.files);
+        selectedFiles = [...selectedFiles, ...incoming].slice(0, MAX_FILES);
+        fileInput.value = ''; // reset so same file can be re-added
         updatePreview();
     });
 
@@ -1467,9 +1807,8 @@
     document.addEventListener('drop', (e) => {
         e.preventDefault();
         messagesArea.style.background = 'transparent';
-
         const files = Array.from(e.dataTransfer.files);
-        selectedFiles = [...selectedFiles, ...files].slice(0, 5);
+        selectedFiles = [...selectedFiles, ...files].slice(0, MAX_FILES);
         updatePreview();
     });
 
@@ -1479,30 +1818,82 @@
 
     function updatePreview() {
         previewArea.innerHTML = '';
+        hasOversized = false;
 
-        if (selectedFiles.length === 0) return;
+        if (selectedFiles.length === 0) {
+            updateFileBadge();
+            return;
+        }
+
+        // Check total post size
+        const totalSize = selectedFiles.reduce((s, f) => s + f.size, 0);
+        const totalOversized = totalSize > PHP_POST_LIMIT;
+
+        // Warning banner for total size
+        if (totalOversized) {
+            const banner = document.createElement('div');
+            banner.className = 'upload-warning-banner';
+            banner.innerHTML = `⚠️ Total size <strong>${formatFileSize(totalSize)}</strong> exceeds server limit of <strong>${formatFileSize(PHP_POST_LIMIT)}</strong>. Please remove some files.`;
+            previewArea.appendChild(banner);
+        }
 
         selectedFiles.forEach((file, idx) => {
+            const isOver = file.size > PHP_PER_FILE_LIMIT;
+            if (isOver) hasOversized = true;
+
             const item = document.createElement('div');
-            item.className = 'attachment-item';
+            item.className = 'attachment-item' + (isOver ? ' oversized' : '');
 
             const icon = getFileIcon(file.type);
             const size = formatFileSize(file.size);
+            const warnHtml = isOver
+                ? `<span class="size-warning">⚠ Exceeds ${formatFileSize(PHP_PER_FILE_LIMIT)} limit</span>`
+                : '';
 
             item.innerHTML = `
                 <span class="attachment-icon">${icon}</span>
                 <span>${file.name.substring(0, 25)}</span>
                 <span style="font-size: 10px; opacity: 0.7;">(${size})</span>
+                ${warnHtml}
                 <button type="button" class="remove-btn" onclick="removeFile(${idx})" title="Remove file">✕</button>
             `;
 
             previewArea.appendChild(item);
         });
+
+        // Show total/max count
+        const summary = document.createElement('div');
+        summary.style.cssText = 'font-size:11px;color:var(--text-muted);padding:2px 4px;width:100%;text-align:right;';
+        summary.textContent = `${selectedFiles.length} / ${MAX_FILES} files selected · Total: ${formatFileSize(totalSize)}`;
+        previewArea.appendChild(summary);
+
+        // Block send if oversized
+        sendBtn.disabled = hasOversized || totalOversized;
+        if (hasOversized || totalOversized) {
+            sendBtn.title = 'Remove oversized files before sending';
+        } else {
+            sendBtn.title = 'Send message';
+        }
+
+        updateFileBadge();
+    }
+
+    function updateFileBadge() {
+        let badge = fileBtn.querySelector('.file-count-badge');
+        if (selectedFiles.length > 0) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'file-count-badge';
+                fileBtn.appendChild(badge);
+            }
+            badge.textContent = selectedFiles.length;
+        } else if (badge) {
+            badge.remove();
+        }
     }
 
     function removeFile(idx) {
         selectedFiles.splice(idx, 1);
-        fileInput.value = '';
         updatePreview();
     }
 
@@ -1697,6 +2088,12 @@
         const text = input.value.trim();
         if (!text && selectedFiles.length === 0) return;
 
+        // Block if any file exceeds limits
+        if (hasOversized) {
+            showError('Please remove files that exceed the size limit before sending.');
+            return;
+        }
+
         // Prepare FormData for multipart request (needed for files)
         const formData = new FormData();
         formData.append('message', text);
@@ -1706,6 +2103,9 @@
             formData.append('attachments[]', file);
         });
 
+        // Snapshot files before clearing (for post-send chip rendering)
+        const sentFiles = [...selectedFiles];
+
         // Clear input and disable
         input.value = '';
         input.style.height = 'auto';
@@ -1713,7 +2113,7 @@
         fileBtn.disabled = true;
 
         const sentTime = formatTime();
-        addMessage('user', text || '(Sent file)', sentTime);
+        const userMsgEl = await addMessage('user', text || '(Sent file)', sentTime);
 
         // Clear preview and files
         selectedFiles = [];
@@ -1743,7 +2143,15 @@
             }
 
             const data = await res.json();
-            addMessage('assistant', data.message, formatTime());
+            const aiMsgEl = await addMessage('assistant', data.message, formatTime());
+
+            // Attach export dropdown to dynamically added AI messages
+            if (aiMsgEl) attachExportDropdown(aiMsgEl, data.message_id);
+
+            // Render file download chips on the user message
+            if (data.attachments && data.attachments.length > 0) {
+                addFileChips(userMsgEl, data.attachments);
+            }
 
             // Update session title in sidebar
             if (data.session_title) {
@@ -1766,6 +2174,50 @@
 
     // Initial scroll
     scrollToBottom();
+
+    // ── File Download Chips ─────────────────────────────────────────────
+    function getFileIcon(mimeType) {
+        if (mimeType.startsWith('image/')) return '🖼️';
+        if (mimeType === 'application/pdf') return '📕';
+        if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+        if (mimeType.includes('sheet') || mimeType.includes('csv')) return '📊';
+        if (mimeType.includes('json')) return '📋';
+        return '📄';
+    }
+
+    function addFileChips(msgEl, attachments) {
+        const container = msgEl.querySelector('div:not(.msg-avatar)');
+        if (!container) return;
+
+        const chipsDiv = document.createElement('div');
+        chipsDiv.className = 'msg-file-chips';
+
+        attachments.forEach(att => {
+            const sizeKb = att.file_size < 1048576
+                ? (att.file_size / 1024).toFixed(1) + ' KB'
+                : (att.file_size / 1048576).toFixed(1) + ' MB';
+
+            const chip = document.createElement('a');
+            chip.href = att.download_url;
+            chip.className = 'file-chip';
+            chip.title = 'Download ' + att.original_filename;
+            chip.download = att.original_filename;
+            chip.innerHTML = `
+                <span class="file-chip-icon">${getFileIcon(att.mime_type)}</span>
+                <span class="file-chip-name">${att.original_filename}</span>
+                <span class="file-chip-size">(${sizeKb})</span>
+            `;
+            chipsDiv.appendChild(chip);
+        });
+
+        // Insert chips after the bubble (before the timestamp)
+        const timeEl = container.querySelector('.msg-time');
+        if (timeEl) {
+            container.insertBefore(chipsDiv, timeEl);
+        } else {
+            container.appendChild(chipsDiv);
+        }
+    }
 
     // ── Model Switcher ──────────────────────────────────────────────────
     const UPDATE_PROVIDER_URL = '{{ route('chat.update-provider', $chatSession) }}';
@@ -1872,11 +2324,91 @@
         if (saved && THEMES.includes(saved)) {
             setTheme(saved);
         } else {
-            // Mark default swatch as active
             const defaultSwatch = document.querySelector('.theme-swatch[data-swatch="dark"]');
             if (defaultSwatch) defaultSwatch.classList.add('active');
         }
     })();
+
+    // ── Memory Modal ────────────────────────────────────────────────────
+    const UPDATE_MEMORY_URL = '{{ route('chat.update-memory', $chatSession) }}';
+    let hasMemory = {{ $chatSession->system_prompt ? 'true' : 'false' }};
+
+    function openMemoryModal() {
+        document.getElementById('memory-modal').classList.add('open');
+        document.getElementById('memory-textarea').focus();
+    }
+
+    function closeMemoryModal() {
+        document.getElementById('memory-modal').classList.remove('open');
+    }
+
+    function handleMemoryModalClick(e) {
+        if (e.target === document.getElementById('memory-modal')) closeMemoryModal();
+    }
+
+    function clearMemory() {
+        document.getElementById('memory-textarea').value = '';
+    }
+
+    function resetMemoryBtnStyle(btn) {
+        if (hasMemory) {
+            btn.style.background = 'rgba(124,58,237,0.1)';
+            btn.style.borderColor = 'rgba(124,58,237,0.4)';
+            btn.style.color = 'var(--accent-light)';
+        } else {
+            btn.style.background = 'var(--glass)';
+            btn.style.borderColor = 'var(--glass-border)';
+            btn.style.color = 'var(--text-secondary)';
+        }
+    }
+
+    async function saveMemory() {
+        const prompt = document.getElementById('memory-textarea').value.trim();
+        const btn = document.querySelector('.memory-save-btn');
+        const orig = btn.textContent;
+        btn.textContent = 'Saving…';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(UPDATE_MEMORY_URL, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ system_prompt: prompt }),
+            });
+
+            if (!res.ok) throw new Error();
+
+            hasMemory = prompt.length > 0;
+
+            // Update memory button indicator
+            const memBtn = document.getElementById('memory-btn');
+            const dot = memBtn.querySelector('span[style]');
+            if (hasMemory && !dot) {
+                const newDot = document.createElement('span');
+                newDot.style.cssText = 'width:7px;height:7px;border-radius:50%;background:#a78bfa;display:inline-block';
+                memBtn.appendChild(newDot);
+            } else if (!hasMemory && dot) {
+                dot.remove();
+            }
+
+            btn.textContent = 'Saved ✓';
+            setTimeout(() => { btn.textContent = orig; btn.disabled = false; closeMemoryModal(); }, 1000);
+
+        } catch {
+            btn.textContent = orig;
+            btn.disabled = false;
+            showError('Failed to save memory. Please try again.');
+        }
+    }
+
+    // Close memory modal on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { closeMemoryModal(); closeProviderModal(); }
+    });
 </script>
 </body>
 </html>

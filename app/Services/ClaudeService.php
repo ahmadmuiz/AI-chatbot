@@ -38,10 +38,11 @@ class ClaudeService
     /**
      * Send a conversation to Claude via AWS Bedrock (bearer token) and return text.
      *
-     * @param  array  $messages  Array of ['role' => 'user'|'assistant', 'content' => '...', 'attachments' => Collection]
+     * @param  array  $messages     Array of ['role' => 'user'|'assistant', 'content' => '...', 'attachments' => Collection]
+     * @param  string|null  $systemPrompt  Optional per-session system prompt / memory
      * @return string
      */
-    public function chat(array $messages): string
+    public function chat(array $messages, ?string $systemPrompt = null): string
     {
         // Process messages to include file content
         $processedMessages = $this->processMessagesWithAttachments($messages);
@@ -49,10 +50,12 @@ class ClaudeService
         // Bedrock Messages API path: /model/{modelId}/invoke
         $path = '/model/' . rawurlencode($this->model) . '/invoke';
 
+        $defaultSystem = 'You are a helpful, friendly, and knowledgeable AI assistant called Claude. Provide clear, concise, and accurate responses.';
+
         $payload = [
             'anthropic_version' => 'bedrock-2023-05-31',
             'max_tokens'        => 4096,
-            'system'            => 'You are a helpful, friendly, and knowledgeable AI assistant called Claude. Provide clear, concise, and accurate responses.',
+            'system'            => $systemPrompt ?: $defaultSystem,
             'messages'          => $processedMessages,
         ];
 

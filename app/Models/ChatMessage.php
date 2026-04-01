@@ -15,6 +15,12 @@ class ChatMessage extends Model
         return $this->belongsTo(ChatSession::class, 'chat_session_id');
     }
 
+    // Alias used by ChatAttachment ownership check
+    public function chatSession(): BelongsTo
+    {
+        return $this->belongsTo(ChatSession::class, 'chat_session_id');
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(ChatAttachment::class);

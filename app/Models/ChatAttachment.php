@@ -40,11 +40,18 @@ class ChatAttachment extends Model
     }
 
     /**
-     * Get the download URL for this attachment (if needed).
+     * Get the download URL for this attachment.
      */
     public function getDownloadUrlAttribute(): string
     {
-        // If you want to serve files, implement a download route
-        return route('attachment.download', $this);
+        return route('chat.attachment.download', $this->id);
+    }
+
+    /**
+     * Access the parent ChatSession through the message relationship.
+     */
+    public function getChatSessionAttribute()
+    {
+        return $this->message?->chatSession;
     }
 }

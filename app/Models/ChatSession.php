@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChatSession extends Model
 {
-    protected $fillable = ['user_id', 'title', 'ai_provider'];
+    protected $fillable = ['user_id', 'title', 'ai_provider', 'system_prompt'];
 
     protected $casts = [
         'ai_provider' => 'string',

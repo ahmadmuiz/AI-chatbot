@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ChatMessageRequest;
+use App\Models\ChatAttachment;
 use App\Models\ChatSession;
 use App\Services\AIServiceFactory;
 use App\Services\AuditService;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ChatController extends Controller
@@ -28,7 +31,6 @@ class ChatController extends Controller
             ->first();
 
         if (! $session) {
-            // No sessions exist, show provider selection
             return redirect()->route('chat.select-provider');
         }
 
@@ -40,11 +42,10 @@ class ChatController extends Controller
      */
     public function show(ChatSession $chatSession): View
     {
-        // Authorise – users can only view their own sessions
         abort_unless($chatSession->user_id === auth()->id(), 403);
 
-        $sessions  = auth()->user()->chatSessions()->latest()->get();
-        $messages  = $chatSession->messages;
+        $sessions = auth()->user()->chatSessions()->latest()->get();
+        $messages = $chatSession->messages()->with('attachments')->get();
 
         return view('chat.index', compact('chatSession', 'sessions', 'messages'));
     }
@@ -68,7 +69,14 @@ class ChatController extends Controller
             $provider = 'claude';
         }
 
-        $session = $this->createSession('New Chat', $provider);
+        // Load default memory from memory.md
+        $defaultMemory = $this->loadDefaultMemory();
+
+        $session = auth()->user()->chatSessions()->create([
+            'title'         => 'New Chat',
+            'ai_provider'   => $provider,
+            'system_prompt' => $defaultMemory,
+        ]);
 
         return redirect()->route('chat.show', $session);
     }
@@ -101,7 +109,7 @@ class ChatController extends Controller
             $chatSession->update(['title' => $title]);
         }
 
-        // Build message history for Claude (with attachments)
+        // Build message history for AI (with attachments)
         $history = $chatSession->messages()
             ->with('attachments')
             ->orderBy('created_at')
@@ -115,9 +123,9 @@ class ChatController extends Controller
             })
             ->toArray();
 
-        // Call AI service based on session's selected provider
-        $aiService = $this->getAIServiceForSession($chatSession);
-        $assistantText = $aiService->chat($history);
+        // Call AI service, passing session's system prompt
+        $aiService     = $this->getAIServiceForSession($chatSession);
+        $assistantText = $aiService->chat($history, $chatSession->system_prompt);
 
         // Persist assistant message
         $chatSession->messages()->create([
@@ -137,10 +145,55 @@ class ChatController extends Controller
             ],
         );
 
+        // Return attached file metadata so JS can render download chips
+        $attachmentData = $attachments
+            ? $attachments->map(fn ($a) => [
+                'id'                => $a->id,
+                'original_filename' => $a->original_filename,
+                'mime_type'         => $a->mime_type,
+                'file_size'         => $a->file_size,
+                'download_url'      => route('chat.attachment.download', $a->id),
+            ])->values()->toArray()
+            : [];
+
         return response()->json([
-            'message' => $assistantText,
+            'message'       => $assistantText,
             'session_title' => $chatSession->fresh()->title,
+            'attachments'   => $attachmentData,
         ]);
+    }
+
+    /**
+     * Download a chat attachment (private storage, ownership-checked).
+     */
+    public function downloadAttachment(ChatAttachment $chatAttachment): Response
+    {
+        // Verify ownership via the message → session chain
+        $session = $chatAttachment->message->chatSession;
+        abort_unless($session->user_id === auth()->id(), 403);
+
+        abort_unless(Storage::disk('local')->exists($chatAttachment->storage_path), 404);
+
+        $contents = Storage::disk('local')->get($chatAttachment->storage_path);
+
+        return response($contents, 200, [
+            'Content-Type'        => $chatAttachment->mime_type,
+            'Content-Disposition' => 'attachment; filename="' . $chatAttachment->original_filename . '"',
+            'Content-Length'      => strlen($contents),
+        ]);
+    }
+
+    /**
+     * Save (update) the system prompt / memory for a session.
+     */
+    public function updateMemory(ChatSession $chatSession): JsonResponse
+    {
+        abort_unless($chatSession->user_id === auth()->id(), 403);
+
+        $prompt = request()->input('system_prompt', '');
+        $chatSession->update(['system_prompt' => $prompt ?: null]);
+
+        return response()->json(['status' => 'ok', 'system_prompt' => $chatSession->system_prompt]);
     }
 
     /**
@@ -173,18 +226,16 @@ class ChatController extends Controller
         return match ($provider) {
             'claude' => app(\App\Services\ClaudeService::class),
             'gemini' => app(\App\Services\GeminiService::class),
-            default => app(\App\Services\ClaudeService::class),
+            default  => app(\App\Services\ClaudeService::class),
         };
     }
 
     /**
-     * Create a new chat session with specified AI provider.
+     * Load the default system prompt from memory.md (if it exists).
      */
-    private function createSession(string $title, string $aiProvider = 'claude'): ChatSession
+    private function loadDefaultMemory(): ?string
     {
-        return auth()->user()->chatSessions()->create([
-            'title' => $title,
-            'ai_provider' => $aiProvider,
-        ]);
+        $path = base_path('memory.md');
+        return file_exists($path) ? trim(file_get_contents($path)) : null;
     }
 }

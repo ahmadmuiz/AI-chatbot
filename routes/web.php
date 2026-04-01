@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\DocumentGenerationController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -23,6 +24,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/{chatSession}', [ChatController::class, 'show'])->name('chat.show');
     Route::post('/chat/{chatSession}/messages', [ChatController::class, 'sendMessage'])->name('chat.message');
     Route::patch('/chat/{chatSession}/provider', [ChatController::class, 'updateProvider'])->name('chat.update-provider');
+    Route::patch('/chat/{chatSession}/memory', [ChatController::class, 'updateMemory'])->name('chat.update-memory');
+    Route::get('/chat/attachment/{chatAttachment}/download', [ChatController::class, 'downloadAttachment'])->name('chat.attachment.download');
+    Route::get('/chat/message/{message}/export/{format}', [DocumentGenerationController::class, 'generate'])->name('chat.message.export');
 
     // Admin panel (requires admin role)
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {

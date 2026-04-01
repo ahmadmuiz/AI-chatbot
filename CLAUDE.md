@@ -38,11 +38,11 @@ This is a **Laravel 12** AI chatbot with multi-provider support, authentication 
 
 Two AI services are available per chat session, selected at session creation:
 
-- **`ClaudeService`** (`app/Services/ClaudeService.php`) — calls Claude via **AWS Bedrock** using a bearer token via Guzzle (`bedrock-runtime.{region}.amazonaws.com/model/{modelId}/invoke`). Also uses the `anthropic-ai/sdk` package for structured request/response handling.
-- **`GeminiService`** (`app/Services/GeminiService.php`) — calls Google Gemini REST API using an API key.
+- **`ClaudeService`** (`app/Services/ClaudeService.php`) — calls Claude via **AWS Bedrock** using a bearer token (`AWS_BEARER_TOKEN_BEDROCK`) via Guzzle (`bedrock-runtime.{region}.amazonaws.com/model/{modelId}/invoke`).
+- **`GeminiService`** (`app/Services/GeminiService.php`) — calls Google Gemini REST API using an API key. Automatically enables **Google Search grounding** (disabled when the request contains file attachments, as the two are incompatible). Retries up to 3 times with exponential backoff on 429/500/503 responses.
 - **`AIServiceFactory`** (`app/Services/AIServiceFactory.php`) — static factory; resolves the correct service from `ChatSession::$ai_provider`.
 
-The provider is stored on `chat_sessions.ai_provider` and resolved at message-send time in `ChatController::sendMessage()`.
+The provider is stored on `chat_sessions.ai_provider` and resolved at message-send time in `ChatController::sendMessage()`. The provider can also be changed on an existing session via `ChatController::updateProvider()` (PATCH endpoint).
 
 ### Data Models
 
@@ -54,10 +54,13 @@ The provider is stored on `chat_sessions.ai_provider` and resolved at message-se
 
 ### File Uploads
 
-`FileUploadService` stores files with UUID names. `ClaudeService` handles attachments in `processMessagesWithAttachments()`: images are base64-encoded for vision, text/JSON/CSV files are sent as inline text. Rich file extraction via `buildFileContentBlock()`:
-- **PDF** — text extracted with `smalot/pdfparser`
-- **XLSX/XLS** — extracted with `PhpSpreadsheet`
-- **DOCX** — text extracted directly from ZIP XML
+`FileUploadService` stores files with UUID names. Both `ClaudeService` and `GeminiService` implement `processMessagesWithAttachments()` with equivalent file-type handling. Each builds a per-file content block (`buildFileContentBlock` / `buildFilePart`):
+- **Images** — base64 `inlineData` (native vision for both providers)
+- **PDF** — `ClaudeService`: text via `smalot/pdfparser`; `GeminiService`: `inlineData` (Gemini reads PDFs natively)
+- **XLSX/XLS** — text extracted with `PhpSpreadsheet` (both providers, truncated at 200 rows / 15 000 chars)
+- **DOCX** — text extracted from ZIP XML (both providers)
+- **CSV** — parsed into pipe-delimited table (truncated at 100 rows)
+- **JSON** — pretty-printed, truncated at 8 000 chars
 - **Legacy .doc** — unsupported; user prompted to convert
 - **Other binary** — placeholder message shown
 
@@ -104,8 +107,9 @@ CACHE_STORE=database
 
 # AWS Bedrock (Claude)
 AWS_BEARER_TOKEN_BEDROCK=     # IAM Identity Center temporary token
-AWS_BEDROCK_MODEL_ID=         # e.g. global.anthropic.claude-haiku-4-5-20251001-v1:0
-AWS_REGION=                   # e.g. ap-southeast-3
+ANTHROPIC_MODEL=              # model ID, e.g. global.anthropic.claude-haiku-4-5-20251001-v1:0
+AWS_BEDROCK_MODEL_ID=         # fallback if ANTHROPIC_MODEL is unset
+AWS_DEFAULT_REGION=           # Bedrock region, e.g. ap-southeast-3
 
 # Google Gemini
 GEMINI_API_KEY=
